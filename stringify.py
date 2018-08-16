@@ -3,6 +3,7 @@ import unpack
 import ustrings
 import pprint as pp
 import textwrap
+import re
 
 
 
@@ -20,8 +21,8 @@ MODE_NONE = 0
 MODE_HEX_PAIR = 1
 MODE_HEX = 2
 MODE_BYTES = 3
-MODE_READABLE_BYTES = 4
-
+MODE_READABLE = 4
+MODE_READABLE_STRIP = 5
 
 
 # Create string with formated ip header
@@ -78,7 +79,7 @@ def ip_header(unpacked_header):
 
 
 
-def grouped_tuple_payload(gpl):
+def grouped_tuple_payload(gpl, mode):
     string = ''
     for i in range(0, len(gpl)):
         string += TAB_1 + 'GROUPED TUPLE PAYLOAD: {}'.format(str(i))
@@ -89,9 +90,7 @@ def grouped_tuple_payload(gpl):
         string += TAB_2 + 'Payload ({}) > \n'.format(str(len(gpl[i][unpack.TCP_PAYLOAD_DATA])))
 
         for payload_packet in gpl[i][unpack.TCP_PAYLOAD_DATA]:
-            string += payload_packet.decode('ascii', 'replace')
-
-        string = string.replace('�', '.').strip()
+            string += hex_dump(payload_packet, mode)
 
     return string
 
@@ -123,6 +122,13 @@ def hex_dump(_bytes , mode = MODE_HEX_PAIR):
         string += _hex.decode('utf-8')
     elif mode == MODE_BYTES:
         string += format_multi_line('', _bytes)
+    elif mode == MODE_READABLE:
+        string += _bytes.decode('ascii', 'replace')
+        return string.replace('�', '.').strip() 
+    elif mode == MODE_READABLE_STRIP:
+        string += _bytes.decode('ascii', 'replace')
+        regex = re.compile('[^a-zA-Z0-9\.\-_:/]')
+        string = regex.sub('', string)
     else:
         return string
         
